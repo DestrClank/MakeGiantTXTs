@@ -41,6 +41,7 @@ class Program
                     byte[] content = Encoding.UTF8.GetBytes(text);
                     fs.Write(content, 0, content.Length);
                     currentSize += content.Length;
+                    numberofBytestoWrite -= content.Length;
                 }
 
                 int progress = (int)Math.Min((currentSize * 100) / sizeInBytes, 100);
@@ -52,13 +53,29 @@ class Program
             }
         }
 
-        Console.WriteLine($"\nThe output file \"{outputPath}\" is created with {FormatSize(sizeInBytes)} ({FormatSizeOctets(sizeInBytes)}) in size.");
-    }
+        int finalfilesize = (int)new FileInfo(outputPath).Length;
+
+        if (finalfilesize < sizeInBytes)
+        {
+            Console.WriteLine($"\n\nThe output file \"{outputPath}\" is created with {FormatSize(finalfilesize)} ({FormatNumber(finalfilesize)} bytes) in size.");
+            Console.WriteLine($"The requested size was {FormatSize(sizeInBytes)} ({FormatNumber(sizeInBytes)} bytes).");
+            Console.WriteLine("The file is smaller than the requested size.");
+        } 
+        else if (finalfilesize > sizeInBytes)
+        {
+            Console.WriteLine($"\n\nThe output file \"{outputPath}\" is created with {FormatSize(finalfilesize)} ({FormatNumber(finalfilesize)} bytes) in size.");
+            Console.WriteLine($"The requested size was {FormatSize(sizeInBytes)} ({FormatNumber(sizeInBytes)} bytes).");
+            Console.WriteLine("The file is larger than the requested size.");
+        }
+        else
+            Console.WriteLine($"\n\nThe output file \"{outputPath}\" is created with {FormatSize(sizeInBytes)} ({FormatSizeOctets(sizeInBytes)}) in size.");
+
+        }
 
     static byte[] GenerateRandomBytes(Random random, long length)
     {
         const int maxChunkSize = 1000 * 1000; // 1 MB
-        const int maxDataSize = 1000 * 1000; // 1 GB
+        const int maxDataSize = 1000 * 1000; // 1 MB
 
         int streamSize = 0;
 
@@ -96,6 +113,11 @@ class Program
         return $"{len:0.##} {sizes[order]}";
     }
 
+    static string FormatNumber(long number)
+    {
+        return number.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     static string FormatSizeOctets(long sizeInBytes)
     {
         string[] sizes = { "octets", "Ko", "Mo", "Go", "To" };
@@ -108,4 +130,5 @@ class Program
         }
         return $"{len:0.##} {sizes[order]}";
     }
+
 }

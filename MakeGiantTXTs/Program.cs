@@ -8,12 +8,12 @@ class Program
     {
         if (args.Length < 2 || args.Length > 3)
         {
-            Console.WriteLine("Usage: MakeGiantTXTs <-random|text> <size_in_bytes> [output_file]");
+            Console.WriteLine("Usage: MakeGiantTXTs <-random|text> <size> [output_file]");
             return;
         }
 
         string text = args[0];
-        if (!long.TryParse(args[1], out long sizeInBytes))
+        if (!TryParseSize(args[1], out long sizeInBytes))
         {
             Console.WriteLine("Invalid size argument.");
             return;
@@ -60,7 +60,7 @@ class Program
             Console.WriteLine($"\n\nThe output file \"{outputPath}\" is created with {FormatSize(finalfilesize)} ({FormatNumber(finalfilesize)} bytes) in size.");
             Console.WriteLine($"The requested size was {FormatSize(sizeInBytes)} ({FormatNumber(sizeInBytes)} bytes).");
             Console.WriteLine("The file is smaller than the requested size.");
-        } 
+        }
         else if (finalfilesize > sizeInBytes)
         {
             Console.WriteLine($"\n\nThe output file \"{outputPath}\" is created with {FormatSize(finalfilesize)} ({FormatNumber(finalfilesize)} bytes) in size.");
@@ -70,7 +70,43 @@ class Program
         else
             Console.WriteLine($"\n\nThe output file \"{outputPath}\" is created with {FormatSize(sizeInBytes)} ({FormatSizeOctets(sizeInBytes)}) in size.");
 
+    }
+
+    static bool TryParseSize(string size, out long sizeInBytes)
+    {
+        sizeInBytes = 0;
+        if (long.TryParse(size, out sizeInBytes))
+        {
+            return true;
         }
+
+        var sizeSuffixes = new Dictionary<string, long>
+                {
+                    { "B", 1L },
+                    { "KB", 1000L },
+                    { "MB", 1000L * 1000L },
+                    { "GB", 1000L * 1000L * 1000L },
+                    { "TB", 1000L * 1000L * 1000L * 1000L },
+                    { "K", 1024L },
+                    { "M", 1024L * 1024L },
+                    { "G", 1024L * 1024L * 1024L },
+                    { "T", 1024L * 1024L * 1024L * 1024L }
+                };
+
+        foreach (var suffix in sizeSuffixes)
+        {
+            if (size.EndsWith(suffix.Key, StringComparison.OrdinalIgnoreCase))
+            {
+                if (long.TryParse(size.Substring(0, size.Length - suffix.Key.Length), out long number))
+                {
+                    sizeInBytes = number * suffix.Value;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
     static byte[] GenerateRandomBytes(Random random, long length)
     {
